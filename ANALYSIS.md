@@ -169,6 +169,13 @@ This file simulates a custom backend:
 
 ### Implementation details and conceptual flow
 
+#### Kernel library
+```python
+import kernel_lib as kernels
+```
+- `kernel_lib.py` holds placeholder kernel implementations in Python.
+- These functions are the stand-ins for real C/C++/ISA kernels.
+
 #### Op registry
 ```python
 OP_REGISTRY = {
@@ -179,7 +186,7 @@ OP_REGISTRY = {
 }
 ```
 - This models the "lowering" phase to a device-specific kernel library.
-- In real backends, this would route into a C/C++/Triton implementation.
+- In real backends, this would route into a C/C++/ISA implementation.
 
 #### Backend function
 ```python
@@ -214,6 +221,40 @@ Conceptually, this proves:
 - You can intercept the FX graph and build your own executor.
 - You can route ops to custom implementations.
 - You understand fallback for unsupported ops.
+
+### Output deep dive (your run)
+
+```text
+MY_ACCEL BACKEND - GRAPH RECEIVED
+  Found op: relu - ✓ SUPPORTED
+  Found op: matmul - ✓ SUPPORTED
+  Found op: softmax - ✓ SUPPORTED
+```
+- The backend sees the FX graph and enumerates each `call_function` node.
+- Each op matches the registry, so no fallbacks are needed.
+
+```text
+--- EXECUTING ON MY_ACCEL ---
+  [MY_ACCEL] relu called: torch.Size([4, 8])
+  [MY_ACCEL] matmul called: torch.Size([4, 8]) @ torch.Size([8, 16])
+  [MY_ACCEL] softmax called: torch.Size([4, 16]), dim=-1
+```
+- These prints come from the per-op wrappers that call `kernel_lib`.
+- `relu` keeps shape `[4, 8]`.
+- `matmul` produces `[4, 16]`.
+- `softmax` is applied across the last dimension.
+
+```text
+Final output shape: torch.Size([4, 16])
+Output sum: 4.0000
+```
+- Softmax makes each row sum to 1, so the total sum is ~4.0 for 4 rows.
+
+```text
+--- Second call (should use cached graph) ---
+```
+- Dynamo reuses the compiled graph; the backend is not reinvoked.
+- The executor runs again with new inputs using the same graph.
 
 ---
 

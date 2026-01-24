@@ -23,6 +23,8 @@ python my_accel_backend_prototype.py
 Notes:
 - The scripts are device-agnostic by default.
 - On Apple Silicon, `torch.compile` runs on CPU; MPS is not supported by Inductor yet.
+- `my_accel_backend_prototype.py` now routes ops through `kernel_lib.py` (Python
+  placeholder kernels).
 
 ## Expected output (high level)
 
@@ -40,3 +42,4 @@ Notes:
 - Prints the ops seen by the backend (supported vs fallback)
 - Shows `EXECUTING ON MY_ACCEL` and per-op logs
 - Prints final output shape and output sums for two calls
+- Kernel calls go through `kernel_lib.py` (GEMM/ReLU/Softmax placeholders)

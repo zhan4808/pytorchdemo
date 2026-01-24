@@ -7,20 +7,22 @@ from typing import List
 import torch
 from torch.fx import GraphModule
 
+import kernel_lib as kernels
+
 
 def my_accel_matmul(a, b):
     print(f"  [MY_ACCEL] matmul called: {a.shape} @ {b.shape}")
-    return torch.matmul(a, b)
+    return kernels.gemm(a, b)
 
 
 def my_accel_relu(x):
     print(f"  [MY_ACCEL] relu called: {x.shape}")
-    return torch.relu(x)
+    return kernels.relu(x)
 
 
 def my_accel_softmax(x, dim):
     print(f"  [MY_ACCEL] softmax called: {x.shape}, dim={dim}")
-    return torch.softmax(x, dim=dim)
+    return kernels.softmax(x, dim=dim)
 
 
 OP_REGISTRY = {
