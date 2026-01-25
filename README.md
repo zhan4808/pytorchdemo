@@ -18,6 +18,7 @@ python -c "import torch; print(torch.__version__); print(torch.cuda.is_available
 python test_compile_basics.py
 python explore_fx_graph.py
 python my_accel_backend_prototype.py
+python backend_pipeline_demo.py
 ```
 
 Notes:
@@ -25,6 +26,7 @@ Notes:
 - On Apple Silicon, `torch.compile` runs on CPU; MPS is not supported by Inductor yet.
 - `my_accel_backend_prototype.py` now routes ops through `kernel_lib.py` (Python
   placeholder kernels).
+- `backend_pipeline_demo.py` adds partitioning + serialization + C-ABI boundary.
 
 ## Expected output (high level)
 
@@ -44,3 +46,8 @@ Notes:
 - Shows `EXECUTING ON MY_ACCEL` and per-op logs
 - Prints final output shape and output sums for two calls
 - Kernel calls go through `kernel_lib.py` (GEMM/ReLU/Softmax placeholders)
+
+`backend_pipeline_demo.py`
+- Prints partitioning results (accelerator vs fallback segments)
+- Prints compile/serialize stats and a runtime execution header
+- Executes kernels through a simulated C ABI boundary (`kernel_lib_c_abi.py`)

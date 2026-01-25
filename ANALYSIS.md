@@ -293,3 +293,68 @@ Your runs show all of these working.
    - FX graph structure and node types
 3. `python my_accel_backend_prototype.py`
    - Backend registry + custom executor + cached graph reuse
+
+---
+
+## 4) `backend_pipeline_demo.py`
+
+### What the script does
+
+This file models a more realistic pipeline:
+- **Partitioning**: splits supported vs fallback ops in a linear pass.
+- **Compilation**: lowers FX into a compact linear "program".
+- **Serialization**: emits a byte blob (compiler artifact).
+- **Runtime**: loads the blob and executes it via a simulated C ABI.
+
+### Implementation details and conceptual flow
+
+#### Partitioning stage
+```python
+segments = partition_graph(gm)
+```
+- The graph is scanned for `call_function` nodes.
+- Supported ops are grouped into accelerator segments.
+- Unsupported ops go to fallback segments (CPU).
+
+This mirrors ExecuTorch/PrivateUse1 style partitioning.
+
+#### Compilation stage
+```python
+program = compile_graph(gm)
+```
+- Each FX node becomes a compact instruction with args/kwargs encoded.
+- Each op is tagged with its kernel name or fallback flag.
+
+#### Serialization stage
+```python
+blob = serialize_program(program)
+runtime_program = deserialize_program(blob)
+```
+- Models the "compiler artifact" your real toolchain would emit.
+- The runtime reads a blob and executes without access to the FX graph.
+
+#### Runtime stage
+```python
+result = c_abi.call_kernel(instr["kernel"], *fn_args, **fn_kwargs)
+```
+- Crosses a simulated C ABI boundary (`kernel_lib_c_abi.py`).
+- This mirrors how Python would call into a real kernel library.
+
+### How to read the output
+
+Typical output:
+```text
+PIPELINE BACKEND - GRAPH RECEIVED
+Partitioned into 1 segment(s)
+  Segment 0: accelerator (3 ops)
+Compiled program length: 5
+Serialized program bytes: <n>
+
+--- RUNTIME EXECUTION ---
+```
+
+Interpretation:
+- All ops were supported, so only accelerator segments were created.
+- Program length includes placeholders + ops + output.
+- Serialization confirms a backend artifact boundary.
+- Runtime executes through the C ABI layer.
