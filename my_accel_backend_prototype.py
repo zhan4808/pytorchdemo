@@ -34,6 +34,58 @@ OP_REGISTRY = {
 }
 
 
+def _encode_arg(arg):
+    if hasattr(arg, "name"):
+        return ("node", arg.name)
+    return ("lit", arg)
+
+
+def _decode_arg(encoded, env):
+    kind, value = encoded
+    if kind == "node":
+        return env[value]
+    return value
+
+
+def compile_graph(gm: GraphModule):
+    """
+    Lower an FX graph into a tiny "program" for a runtime to execute.
+    This models a compiler that emits a backend-specific instruction list.
+    """
+    program = []
+    for node in gm.graph.nodes:
+        if node.op == "placeholder":
+            program.append({"op": "placeholder", "name": node.name})
+        elif node.op == "call_function":
+            program.append(
+                {
+                    "op": "call_function",
+                    "name": node.name,
+                    "target": node.target,
+                    "supported": node.target in OP_REGISTRY,
+                    "args": [_encode_arg(a) for a in node.args],
+                    "kwargs": {k: _encode_arg(v) for k, v in node.kwargs.items()},
+                }
+            )
+        elif node.op == "output":
+            output_nodes = node.args[0]
+            if isinstance(output_nodes, tuple):
+                names = [n.name for n in output_nodes]
+            else:
+                names = [output_nodes.name]
+            program.append({"op": "output", "names": names})
+        else:
+            program.append(
+                {
+                    "op": "unsupported",
+                    "node_op": node.op,
+                    "target": node.target,
+                    "name": node.name,
+                }
+            )
+    return program
+
+
 def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
     """
     Custom backend for a prototype accelerator.
@@ -53,38 +105,40 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
     print(f"\nTotal ops: {len(ops_found)}")
     print(f"Supported: {sum(1 for op in ops_found if op in OP_REGISTRY)}")
 
+    program = compile_graph(gm)
+    call_function_count = sum(1 for instr in program if instr["op"] == "call_function")
+    print(f"\nCompiling graph -> {call_function_count} call_function nodes")
+    print(f"Program length: {len(program)}")
+
     def custom_executor(*args):
         print("\n--- EXECUTING ON MY_ACCEL ---")
 
         env = {}
         arg_iter = iter(args)
 
-        for node in gm.graph.nodes:
-            if node.op == "placeholder":
-                env[node.name] = next(arg_iter)
+        for instr in program:
+            if instr["op"] == "placeholder":
+                env[instr["name"]] = next(arg_iter)
+            elif instr["op"] == "call_function":
+                fn_args = [_decode_arg(a, env) for a in instr["args"]]
+                fn_kwargs = {k: _decode_arg(v, env) for k, v in instr["kwargs"].items()}
 
-        for node in gm.graph.nodes:
-            if node.op == "placeholder":
-                continue
-            if node.op == "call_function":
-                fn_args = [env[a.name] if hasattr(a, "name") else a for a in node.args]
-                fn_kwargs = {
-                    k: env[v.name] if hasattr(v, "name") else v
-                    for k, v in node.kwargs.items()
-                }
-
-                if node.target in OP_REGISTRY:
-                    result = OP_REGISTRY[node.target](*fn_args, **fn_kwargs)
+                if instr["supported"]:
+                    result = OP_REGISTRY[instr["target"]](*fn_args, **fn_kwargs)
                 else:
-                    print(f"  [FALLBACK] {node.target}")
-                    result = node.target(*fn_args, **fn_kwargs)
+                    print(f"  [FALLBACK] {instr['target']}")
+                    result = instr["target"](*fn_args, **fn_kwargs)
 
-                env[node.name] = result
-            elif node.op == "output":
-                output_nodes = node.args[0]
-                if isinstance(output_nodes, tuple):
-                    return tuple(env[n.name] for n in output_nodes)
-                return env[output_nodes.name]
+                env[instr["name"]] = result
+            elif instr["op"] == "output":
+                names = instr["names"]
+                if len(names) == 1:
+                    return env[names[0]]
+                return tuple(env[name] for name in names)
+            elif instr["op"] == "unsupported":
+                raise NotImplementedError(
+                    f"Unsupported node op '{instr['node_op']}' for target '{instr['target']}'"
+                )
 
         return None
 

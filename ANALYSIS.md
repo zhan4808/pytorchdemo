@@ -197,12 +197,22 @@ def my_accel_backend(gm: GraphModule, example_inputs):
 - Dynamo calls this once per compiled graph.
 - We inspect and summarize supported ops, then return a callable.
 
+#### Compiler stage (lowering to a program)
+```python
+def compile_graph(gm: GraphModule):
+    ...
+    return program
+```
+- This models a compiler step that turns the FX graph into a linear program.
+- The program stores op targets, args, and whether each op is supported.
+- This is the separation between **compile time** and **runtime**.
+
 #### Custom executor
 ```python
 def custom_executor(*args):
     ...
-    for node in gm.graph.nodes:
-        if node.op == "call_function":
+    for instr in program:
+        if instr["op"] == "call_function":
             # use registry or fallback
 ```
 - This is a minimal "interpreter" for the FX graph.
@@ -214,6 +224,7 @@ def custom_executor(*args):
 Your output shows:
 - The backend received the graph.
 - All ops were recognized as supported.
+- The graph was compiled into a program before execution.
 - Each op execution prints from the custom kernel.
 - Two runs show the cached graph path on the second call.
 
@@ -229,9 +240,13 @@ MY_ACCEL BACKEND - GRAPH RECEIVED
   Found op: relu - ✓ SUPPORTED
   Found op: matmul - ✓ SUPPORTED
   Found op: softmax - ✓ SUPPORTED
+
+Compiling graph -> 3 call_function nodes
+Program length: 5
 ```
 - The backend sees the FX graph and enumerates each `call_function` node.
 - Each op matches the registry, so no fallbacks are needed.
+- The compiler emits a short linear program (placeholders + call_function ops + output).
 
 ```text
 --- EXECUTING ON MY_ACCEL ---
