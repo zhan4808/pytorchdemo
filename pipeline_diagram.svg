@@ -52,4 +52,10 @@
   <text class="small" x="985" y="195">hook (WIP)</text>
 
   <line class="arrow dashed" x1="1025" y1="100" x2="1025" y2="150"/>
+
+  <rect class="box" x="20" y="150" width="260" height="60" rx="6"/>
+  <text class="text" x="35" y="175">Scratchpad allocator</text>
+  <text class="small" x="35" y="195">runtime firmware service</text>
+
+  <line class="arrow" x1="280" y1="180" x2="950" y2="180"/>
 </svg>

@@ -10,6 +10,7 @@ Use **torch.export + ExecuTorch‑style delegate** as the main pipeline, and run
 - Export/delegate gives a clean **graph → blob → runtime** story.
 - CPU fallback enables partial coverage early.
 - PrivateUse1 accelerates kernel verification without blocking compiler work.
+- Static export avoids JIT/firmware complexity and supports DRAM‑loaded blobs.
 
 ## Options (brief)
 

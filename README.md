@@ -19,13 +19,15 @@ python backend_pipeline_demo.py
 
 ![Atalla pipeline](pipeline_diagram.svg)
 
+Scratchpad allocation is modeled as a runtime firmware service (not a compile‑time decision).
+
 ## Current stack
 
 1. **Graph capture**: `torch.export.export` produces an FX `GraphModule`.
 2. **Lowering**: the backend maps ATen ops to Atalla kernel stubs.
 3. **Compilation**: the graph is lowered into a linear program.
 4. **Serialization**: the program is encoded into a byte blob.
-5. **Runtime**: the blob is executed via a C‑ABI shim into `kernel_lib`.
+5. **Runtime**: the blob is placed in simulated DRAM and executed via a C‑ABI shim into `kernel_lib`.
 6. **Fallback**: unsupported ops can call back into `torch.ops.*`.
 
 Notes:
@@ -36,6 +38,8 @@ Notes:
 - `torch.export` is used to capture graphs for the demo backend pipeline.
  - Exported graphs use ATen ops like `aten.relu.default`, which is what the
    registry maps against.
+- No `torch.compile`/JIT: we use static export so the compiler can emit a fixed
+  blob that the simulator can load from DRAM.
 
 ## Output
 
@@ -63,7 +67,7 @@ Notes:
 - Executes kernels through placeholder C ABI (`kernel_lib_c_abi.py`)
 
 ## Atalla integration
-- Replace `kernel_lib.py` with real C kernels, `kernel_lib_c_abi.py` with shared library boundary
-- Expand the op registry to the Atalla operator set (where/when is this defined again?)
-- memory planning/shape specialization, implement binary format/versioning for compiled blobs
-- add simulator/RTL execution hooks in the runtime.
+- Replace `kernel_lib.py` with real C kernels, `kernel_lib_c_abi.py` with a shared library boundary.
+- Expand the op registry to the Atalla operator set (define with the compiler/kernel teams).
+- Add memory planning + shape specialization; implement binary format/versioning for blobs.
+- Add simulator/RTL execution hooks in the runtime.
