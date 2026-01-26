@@ -12,12 +12,25 @@ import kernel_lib_c_abi as c_abi
 
 
 OP_TO_KERNEL = {
-    torch.matmul: "gemm",
-    torch.relu: "relu",
-    torch.nn.functional.relu: "relu",
-    torch.softmax: "softmax",
-    torch.nn.functional.softmax: "softmax",
+    "aten.matmul.default": "gemm",
+    "aten.relu.default": "relu",
+    "aten.softmax.int": "softmax",
+    "aten.softmax.default": "softmax",
 }
+
+
+def _target_to_str(target):
+    return str(target)
+
+
+def _resolve_target(target_str):
+    parts = target_str.split(".")
+    if len(parts) != 3:
+        raise ValueError(f"Unsupported target string '{target_str}'")
+    namespace, op_name, overload = parts
+    ns = getattr(torch.ops, namespace)
+    op = getattr(ns, op_name)
+    return getattr(op, overload)
 
 
 def _encode_arg(arg):
@@ -45,7 +58,7 @@ def partition_graph(gm: GraphModule):
     for node in gm.graph.nodes:
         if node.op != "call_function":
             continue
-        is_supported = node.target in OP_TO_KERNEL
+        is_supported = _target_to_str(node.target) in OP_TO_KERNEL
         kind = "accelerator" if is_supported else "fallback"
         if current_kind is None:
             current_kind = kind
@@ -70,12 +83,13 @@ def compile_graph(gm: GraphModule):
         if node.op == "placeholder":
             program.append({"op": "placeholder", "name": node.name})
         elif node.op == "call_function":
-            kernel = OP_TO_KERNEL.get(node.target)
+            target_str = _target_to_str(node.target)
+            kernel = OP_TO_KERNEL.get(target_str)
             program.append(
                 {
                     "op": "call_function",
                     "name": node.name,
-                    "target": node.target,
+                    "target": target_str,
                     "kernel": kernel,
                     "supported": kernel is not None,
                     "args": [_encode_arg(a) for a in node.args],
@@ -138,7 +152,7 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
                     result = c_abi.call_kernel(instr["kernel"], *fn_args, **fn_kwargs)
                 else:
                     print(f"  [FALLBACK] {instr['target']}")
-                    result = instr["target"](*fn_args, **fn_kwargs)
+                    result = _resolve_target(instr["target"])(*fn_args, **fn_kwargs)
 
                 env[instr["name"]] = result
             elif instr["op"] == "output":
@@ -152,12 +166,12 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
     return runtime_executor
 
 
-@torch.compile(backend=my_accel_backend)
-def demo_model(x, w):
-    h = torch.relu(x)
-    y = torch.matmul(h, w)
-    z = torch.softmax(y, dim=-1)
-    return z
+class DemoModel(torch.nn.Module):
+    def forward(self, x, w):
+        h = torch.relu(x)
+        y = torch.matmul(h, w)
+        z = torch.softmax(y, dim=-1)
+        return z
 
 
 def main():
@@ -166,7 +180,11 @@ def main():
     x = torch.randn(4, 8)
     w = torch.randn(8, 16)
 
-    output = demo_model(x, w)
+    model = DemoModel()
+    exported = torch.export.export(model, (x, w))
+    gm = exported.graph_module
+    runtime = my_accel_backend(gm, (x, w))
+    output = runtime(x, w)
     print(f"\nFinal output shape: {output.shape}")
     print(f"Output sum: {output.sum():.4f}")
 

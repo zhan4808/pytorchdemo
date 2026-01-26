@@ -1,19 +1,26 @@
-import os
 import torch
 
 
 # ============================================
-# Example 1: Basic torch.compile
+# Example 1: Basic torch.export
 # ============================================
-@torch.compile
-def simple_fn(x, y):
-    return torch.relu(x @ y.T)
+class SimpleModule(torch.nn.Module):
+    def forward(self, x, y):
+        return torch.relu(x @ y.T)
+
+
+def _unwrap_output(output):
+    if isinstance(output, tuple) and len(output) == 1:
+        return output[0]
+    return output
 
 
 def run_example_1():
     x = torch.randn(128, 64)
     y = torch.randn(128, 64)
-    result = simple_fn(x, y)
+    model = SimpleModule()
+    exported = torch.export.export(model, (x, y))
+    result = _unwrap_output(exported.graph_module(x, y))
     print(f"Example 1 - Output shape: {result.shape}")
 
 
@@ -41,34 +48,39 @@ def my_custom_backend(gm: torch.fx.GraphModule, example_inputs):
     return gm.forward
 
 
-@torch.compile(backend=my_custom_backend)
-def model_to_trace(x, w):
-    h = torch.relu(x)
-    y = torch.matmul(h, w)
-    z = torch.softmax(y, dim=-1)
-    return z
+class TraceModule(torch.nn.Module):
+    def forward(self, x, w):
+        h = torch.relu(x)
+        y = torch.matmul(h, w)
+        z = torch.softmax(y, dim=-1)
+        return z
 
 
 def run_example_2():
     print("\n\nExample 2 - Custom Backend:")
     x = torch.randn(32, 128)
     w = torch.randn(128, 64)
-    output = model_to_trace(x, w)
+    model = TraceModule()
+    exported = torch.export.export(model, (x, w))
+    output = _unwrap_output(my_custom_backend(exported.graph_module, (x, w))(x, w))
     print(f"Output shape: {output.shape}")
 
 
 # ============================================
-# Example 3: See what ops Inductor receives
+# Example 3: Inspect exported ops
 # ============================================
-@torch.compile
-def inductor_example(x):
-    return torch.sin(x) + torch.cos(x)
+class ExportOpsModule(torch.nn.Module):
+    def forward(self, x):
+        return torch.sin(x) + torch.cos(x)
 
 
 def run_example_3():
-    os.environ["TORCH_LOGS"] = "output_code"
-    print("\n\nExample 3 - Inductor output (check console for generated code):")
-    result = inductor_example(torch.randn(100))
+    print("\n\nExample 3 - Exported ops:")
+    x = torch.randn(100)
+    model = ExportOpsModule()
+    exported = torch.export.export(model, (x,))
+    exported.graph_module.graph.print_tabular()
+    result = _unwrap_output(exported.graph_module(x))
     print(f"Example 3 - Output sum: {result.sum():.4f}")
 
 

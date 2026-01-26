@@ -1,5 +1,5 @@
 """
-Prototype of a custom accelerator backend for torch.compile.
+Prototype of a custom accelerator backend for torch.export.
 Demonstrates the dispatch flow from FX graph to op implementations.
 """
 from typing import List
@@ -26,12 +26,25 @@ def my_accel_softmax(x, dim):
 
 
 OP_REGISTRY = {
-    torch.matmul: my_accel_matmul,
-    torch.relu: my_accel_relu,
-    torch.nn.functional.relu: my_accel_relu,
-    torch.softmax: my_accel_softmax,
-    torch.nn.functional.softmax: my_accel_softmax,
+    "aten.matmul.default": my_accel_matmul,
+    "aten.relu.default": my_accel_relu,
+    "aten.softmax.int": my_accel_softmax,
+    "aten.softmax.default": my_accel_softmax,
 }
+
+
+def _target_to_str(target):
+    return str(target)
+
+
+def _resolve_target(target_str):
+    parts = target_str.split(".")
+    if len(parts) != 3:
+        raise ValueError(f"Unsupported target string '{target_str}'")
+    namespace, op_name, overload = parts
+    ns = getattr(torch.ops, namespace)
+    op = getattr(ns, op_name)
+    return getattr(op, overload)
 
 
 def _encode_arg(arg):
@@ -57,12 +70,13 @@ def compile_graph(gm: GraphModule):
         if node.op == "placeholder":
             program.append({"op": "placeholder", "name": node.name})
         elif node.op == "call_function":
+            target_str = _target_to_str(node.target)
             program.append(
                 {
                     "op": "call_function",
                     "name": node.name,
-                    "target": node.target,
-                    "supported": node.target in OP_REGISTRY,
+                    "target": target_str,
+                    "supported": target_str in OP_REGISTRY,
                     "args": [_encode_arg(a) for a in node.args],
                     "kwargs": {k: _encode_arg(v) for k, v in node.kwargs.items()},
                 }
@@ -97,10 +111,10 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
     ops_found = []
     for node in gm.graph.nodes:
         if node.op == "call_function":
-            ops_found.append(node.target)
-            supported = "✓ SUPPORTED" if node.target in OP_REGISTRY else "✗ NOT SUPPORTED (will fallback)"
-            name = node.target.__name__ if hasattr(node.target, "__name__") else str(node.target)
-            print(f"  Found op: {name} - {supported}")
+            target_str = _target_to_str(node.target)
+            ops_found.append(target_str)
+            supported = "✓ SUPPORTED" if target_str in OP_REGISTRY else "✗ NOT SUPPORTED (will fallback)"
+            print(f"  Found op: {target_str} - {supported}")
 
     print(f"\nTotal ops: {len(ops_found)}")
     print(f"Supported: {sum(1 for op in ops_found if op in OP_REGISTRY)}")
@@ -127,7 +141,7 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
                     result = OP_REGISTRY[instr["target"]](*fn_args, **fn_kwargs)
                 else:
                     print(f"  [FALLBACK] {instr['target']}")
-                    result = instr["target"](*fn_args, **fn_kwargs)
+                    result = _resolve_target(instr["target"])(*fn_args, **fn_kwargs)
 
                 env[instr["name"]] = result
             elif instr["op"] == "output":
@@ -145,12 +159,12 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
     return custom_executor
 
 
-@torch.compile(backend=my_accel_backend)
-def test_model(x, w):
-    h = torch.relu(x)
-    y = torch.matmul(h, w)
-    z = torch.softmax(y, dim=-1)
-    return z
+class TestModel(torch.nn.Module):
+    def forward(self, x, w):
+        h = torch.relu(x)
+        y = torch.matmul(h, w)
+        z = torch.softmax(y, dim=-1)
+        return z
 
 
 def main():
@@ -159,12 +173,16 @@ def main():
     x = torch.randn(4, 8)
     w = torch.randn(8, 16)
 
-    output = test_model(x, w)
+    model = TestModel()
+    exported = torch.export.export(model, (x, w))
+    gm = exported.graph_module
+    runtime = my_accel_backend(gm, (x, w))
+    output = runtime(x, w)
     print(f"\nFinal output shape: {output.shape}")
     print(f"Output sum: {output.sum():.4f}")
 
     print("\n--- Second call (should use cached graph) ---")
-    output2 = test_model(torch.randn(4, 8), w)
+    output2 = runtime(torch.randn(4, 8), w)
     print(f"Output2 sum: {output2.sum():.4f}")
 
 
