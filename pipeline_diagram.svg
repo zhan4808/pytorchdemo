@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="280" viewBox="0 0 1120 280">
+  <style>
+    .box { fill: #ffffff; stroke: #222222; stroke-width: 2; }
+    .text { font: 14px Arial, sans-serif; fill: #111111; }
+    .small { font: 12px Arial, sans-serif; fill: #111111; }
+    .arrow { stroke: #222222; stroke-width: 2; marker-end: url(#arrowhead); }
+    .dashed { stroke-dasharray: 6 4; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#222222"/>
+    </marker>
+  </defs>
+
+  <rect class="box" x="20" y="40" width="160" height="60" rx="6"/>
+  <text class="text" x="35" y="65">PyTorch Module</text>
+  <text class="text" x="35" y="85">Eager Code</text>
+
+  <rect class="box" x="210" y="40" width="160" height="60" rx="6"/>
+  <text class="text" x="235" y="65">torch.export</text>
+  <text class="text" x="245" y="85">FX Graph</text>
+
+  <rect class="box" x="400" y="40" width="160" height="60" rx="6"/>
+  <text class="text" x="430" y="65">Partition</text>
+  <text class="small" x="415" y="85">supported vs fallback</text>
+
+  <rect class="box" x="590" y="40" width="170" height="60" rx="6"/>
+  <text class="text" x="615" y="65">Lower + Compile</text>
+  <text class="small" x="635" y="85">Program IR</text>
+
+  <rect class="box" x="790" y="40" width="130" height="60" rx="6"/>
+  <text class="text" x="815" y="65">Serialize</text>
+  <text class="small" x="830" y="85">Blob</text>
+
+  <rect class="box" x="950" y="40" width="150" height="60" rx="6"/>
+  <text class="text" x="985" y="65">Runtime</text>
+  <text class="small" x="965" y="85">C-ABI Kernels</text>
+
+  <line class="arrow" x1="180" y1="70" x2="210" y2="70"/>
+  <line class="arrow" x1="370" y1="70" x2="400" y2="70"/>
+  <line class="arrow" x1="560" y1="70" x2="590" y2="70"/>
+  <line class="arrow" x1="760" y1="70" x2="790" y2="70"/>
+  <line class="arrow" x1="920" y1="70" x2="950" y2="70"/>
+
+  <rect class="box" x="610" y="150" width="320" height="60" rx="6"/>
+  <text class="text" x="630" y="175">Fallback (CPU torch.ops.*)</text>
+
+  <line class="arrow" x1="480" y1="100" x2="690" y2="150"/>
+
+  <rect class="box" x="950" y="150" width="150" height="60" rx="6"/>
+  <text class="text" x="975" y="175">Simulator/RTL</text>
+  <text class="small" x="985" y="195">hook (WIP)</text>
+
+  <line class="arrow dashed" x1="1025" y1="100" x2="1025" y2="150"/>
+</svg>
