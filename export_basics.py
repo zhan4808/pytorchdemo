@@ -1,21 +1,19 @@
+"""Export examples for graph capture and inspection."""
 import torch
-
-
-# ============================================
-# Example 1: Basic torch.export
-# ============================================
 class SimpleModule(torch.nn.Module):
     def forward(self, x, y):
         return torch.relu(x @ y.T)
 
 
 def _unwrap_output(output):
+    """Return the tensor when export produces a single-item tuple."""
     if isinstance(output, tuple) and len(output) == 1:
         return output[0]
     return output
 
 
 def run_example_1():
+    """Capture and run a simple matmul+relu graph."""
     x = torch.randn(128, 64)
     y = torch.randn(128, 64)
     model = SimpleModule()
@@ -24,13 +22,8 @@ def run_example_1():
     print(f"Example 1 - Output shape: {result.shape}")
 
 
-# ============================================
-# Example 2: Custom backend that prints the graph
-# ============================================
 def my_custom_backend(gm: torch.fx.GraphModule, example_inputs):
-    """
-    Custom backend that prints graph info and returns a callable.
-    """
+    """Print a graph summary and return the graph callable."""
     print("\n" + "=" * 60)
     print("MY CUSTOM BACKEND RECEIVED A GRAPH!")
     print("=" * 60)
@@ -57,6 +50,7 @@ class TraceModule(torch.nn.Module):
 
 
 def run_example_2():
+    """Export a graph and print it through the custom backend."""
     print("\n\nExample 2 - Custom Backend:")
     x = torch.randn(32, 128)
     w = torch.randn(128, 64)
@@ -66,15 +60,13 @@ def run_example_2():
     print(f"Output shape: {output.shape}")
 
 
-# ============================================
-# Example 3: Inspect exported ops
-# ============================================
 class ExportOpsModule(torch.nn.Module):
     def forward(self, x):
         return torch.sin(x) + torch.cos(x)
 
 
 def run_example_3():
+    """Show exported ops and run the graph module."""
     print("\n\nExample 3 - Exported ops:")
     x = torch.randn(100)
     model = ExportOpsModule()

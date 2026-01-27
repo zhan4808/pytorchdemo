@@ -1,3 +1,4 @@
+"""FX tracing demo for inspecting graph structure."""
 import torch
 from torch.fx import symbolic_trace
 
@@ -14,6 +15,7 @@ class SimpleModel(torch.nn.Module):
 
 
 def main():
+    """Trace a module and print graph details."""
     model = SimpleModel()
     traced = symbolic_trace(model)
 

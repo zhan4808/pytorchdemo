@@ -1,7 +1,4 @@
-"""
-Demo: partition + compile + serialize + execute pipeline.
-This models an ExecuTorch/PrivateUse1-style flow with CPU fallback.
-"""
+"""Pipeline demo: partition → compile → serialize → runtime."""
 import json
 from typing import List
 
@@ -47,10 +44,7 @@ def _decode_arg(encoded, env):
 
 
 def partition_graph(gm: GraphModule):
-    """
-    Partition into supported and fallback ops in a single linear pass.
-    Returns a list of segments: [{"kind": "accelerator"|"fallback", "nodes": [...]}].
-    """
+    """Return accelerator vs fallback segments from a linear scan."""
     segments = []
     current_kind = None
     current_nodes = []
@@ -75,9 +69,7 @@ def partition_graph(gm: GraphModule):
 
 
 def compile_graph(gm: GraphModule):
-    """
-    Lower the FX graph to a linear program with an explicit fallback flag.
-    """
+    """Lower an FX graph into a linear program with fallback tags."""
     program = []
     for node in gm.graph.nodes:
         if node.op == "placeholder":
@@ -107,9 +99,7 @@ def compile_graph(gm: GraphModule):
 
 
 def serialize_program(program):
-    """
-    Serialize to bytes (mock compiler artifact).
-    """
+    """Serialize a program to bytes (mock compiler artifact)."""
     return json.dumps(program, default=str).encode("utf-8")
 
 
@@ -118,6 +108,7 @@ def deserialize_program(blob):
 
 
 def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
+    """Compile + serialize a graph and return a runtime callable."""
     print("\n" + "=" * 60)
     print("PIPELINE BACKEND - GRAPH RECEIVED")
     print("=" * 60)

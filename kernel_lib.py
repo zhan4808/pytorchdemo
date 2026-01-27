@@ -1,28 +1,19 @@
-"""
-Minimal "kernel" library implemented in Python.
-These are functional placeholders for real C/C++/ISA kernels.
-"""
+"""Kernel stubs used by the demo runtime."""
 import torch
 
 
 def gemm(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    """
-    GEMM kernel placeholder.
-    """
+    """GEMM stub using PyTorch matmul."""
     return a @ b
 
 
 def relu(x: torch.Tensor) -> torch.Tensor:
-    """
-    ReLU kernel placeholder.
-    """
+    """ReLU stub using max with zero."""
     return torch.maximum(x, torch.zeros_like(x))
 
 
 def softmax(x: torch.Tensor, dim: int = -1) -> torch.Tensor:
-    """
-    Numerically stable softmax kernel placeholder.
-    """
+    """Softmax stub with a stable max-subtract."""
     x_max = x.max(dim=dim, keepdim=True).values
     exp = torch.exp(x - x_max)
     denom = exp.sum(dim=dim, keepdim=True)

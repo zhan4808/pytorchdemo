@@ -1,11 +1,9 @@
-"""
-Simulated C ABI boundary for kernel calls.
-In a real system this would be a C shared library invoked via ctypes/cffi.
-"""
+"""C ABI shim for kernel stubs."""
 import kernel_lib as kernels
 
 
 def call_kernel(op_name, *args, **kwargs):
+    """Dispatch a named kernel to the stub implementation."""
     if op_name == "gemm":
         return kernels.gemm(*args, **kwargs)
     if op_name == "relu":

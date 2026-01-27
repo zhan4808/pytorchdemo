@@ -1,7 +1,4 @@
-"""
-Prototype of a custom accelerator backend for torch.export.
-Demonstrates the dispatch flow from FX graph to op implementations.
-"""
+"""Prototype backend: export → op registry → runtime."""
 from typing import List
 
 import torch
@@ -61,10 +58,7 @@ def _decode_arg(encoded, env):
 
 
 def compile_graph(gm: GraphModule):
-    """
-    Lower an FX graph into a tiny "program" for a runtime to execute.
-    This models a compiler that emits a backend-specific instruction list.
-    """
+    """Lower an FX graph into a linear instruction list."""
     program = []
     for node in gm.graph.nodes:
         if node.op == "placeholder":
@@ -101,9 +95,7 @@ def compile_graph(gm: GraphModule):
 
 
 def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
-    """
-    Custom backend for a prototype accelerator.
-    """
+    """Compile a graph and return a runtime callable."""
     print("\n" + "=" * 60)
     print("MY_ACCEL BACKEND - GRAPH RECEIVED")
     print("=" * 60)
