@@ -22,15 +22,15 @@
 
   <rect class="box" x="400" y="40" width="160" height="60" rx="6"/>
   <text class="text" x="430" y="65">Partition</text>
-  <text class="small" x="415" y="85">supported vs fallback</text>
+  <text class="small" x="410" y="85">supported vs unsupported</text>
 
   <rect class="box" x="590" y="40" width="170" height="60" rx="6"/>
   <text class="text" x="615" y="65">Lower + Compile</text>
   <text class="small" x="635" y="85">Program IR</text>
 
   <rect class="box" x="790" y="40" width="130" height="60" rx="6"/>
-  <text class="text" x="815" y="65">Serialize</text>
-  <text class="small" x="830" y="85">Blob</text>
+  <text class="text" x="805" y="65">Emit C</text>
+  <text class="small" x="805" y="85">Executable</text>
 
   <rect class="box" x="950" y="40" width="150" height="60" rx="6"/>
   <text class="text" x="985" y="65">Runtime</text>
@@ -41,11 +41,6 @@
   <line class="arrow" x1="560" y1="70" x2="590" y2="70"/>
   <line class="arrow" x1="760" y1="70" x2="790" y2="70"/>
   <line class="arrow" x1="920" y1="70" x2="950" y2="70"/>
-
-  <rect class="box" x="610" y="150" width="320" height="60" rx="6"/>
-  <text class="text" x="630" y="175">Fallback (CPU torch.ops.*)</text>
-
-  <line class="arrow" x1="480" y1="100" x2="690" y2="150"/>
 
   <rect class="box" x="950" y="150" width="150" height="60" rx="6"/>
   <text class="text" x="975" y="175">Simulator/RTL</text>

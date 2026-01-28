@@ -26,9 +26,9 @@ Scratchpad allocation is modeled as a runtime firmware service (not a compile‑
 1. **Graph capture**: `torch.export.export` produces an FX `GraphModule`.
 2. **Lowering**: the backend maps ATen ops to Atalla kernel stubs.
 3. **Compilation**: the graph is lowered into a linear program.
-4. **Serialization**: the program is encoded into a byte blob.
-5. **Runtime**: the blob is placed in simulated DRAM and executed via a C‑ABI shim into `kernel_lib`.
-6. **Fallback**: unsupported ops can call back into `torch.ops.*`.
+4. **Artifact**: the compiler emits a C executable (demo uses a byte blob as a stand‑in).
+5. **Runtime**: the artifact is placed in simulated DRAM and executed via a C‑ABI shim into `kernel_lib`.
+6. **Accelerator‑only**: unsupported ops are errors (no eager/CPU fallback).
 
 Notes:
 - scripts are device-agnostic by default.
@@ -54,7 +54,7 @@ Notes:
 - Prints the generated forward code
 
 `my_accel_backend_prototype.py`
-- Prints the ops seen by the backend (supported vs fallback)
+- Prints the ops seen by the backend (supported vs unsupported)
 - Prints a compile step (`Compiling graph -> ...`, `Program length: ...`)
 - Shows `EXECUTING ON MY_ACCEL` and per-op logs
 - Prints final output shape and output sums for two calls
@@ -62,12 +62,14 @@ Notes:
  - Ops are matched by ATen names (e.g., `aten.matmul.default`)
 
 `backend_pipeline_demo.py`
-- Prints partitioning results (accelerator vs fallback segments)
+- Prints partitioning results (accelerator vs unsupported segments)
 - Prints compile/serialize stats and a runtime execution header
 - Executes kernels through placeholder C ABI (`kernel_lib_c_abi.py`)
+ - Raises on unsupported ops (no CPU fallback)
 
 ## Atalla integration
 - Replace `kernel_lib.py` with real C kernels, `kernel_lib_c_abi.py` with a shared library boundary.
 - Expand the op registry to the Atalla operator set (define with the compiler/kernel teams).
 - Add memory planning + shape specialization; implement binary format/versioning for blobs.
 - Add simulator/RTL execution hooks in the runtime.
+ - Emit a final C executable (no eager execution or CPU fallback).

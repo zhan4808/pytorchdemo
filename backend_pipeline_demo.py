@@ -20,16 +20,6 @@ def _target_to_str(target):
     return str(target)
 
 
-def _resolve_target(target_str):
-    parts = target_str.split(".")
-    if len(parts) != 3:
-        raise ValueError(f"Unsupported target string '{target_str}'")
-    namespace, op_name, overload = parts
-    ns = getattr(torch.ops, namespace)
-    op = getattr(ns, op_name)
-    return getattr(op, overload)
-
-
 def _encode_arg(arg):
     if hasattr(arg, "name"):
         return ("node", arg.name)
@@ -44,7 +34,7 @@ def _decode_arg(encoded, env):
 
 
 def partition_graph(gm: GraphModule):
-    """Return accelerator vs fallback segments from a linear scan."""
+    """Return accelerator vs unsupported segments from a linear scan."""
     segments = []
     current_kind = None
     current_nodes = []
@@ -53,7 +43,7 @@ def partition_graph(gm: GraphModule):
         if node.op != "call_function":
             continue
         is_supported = _target_to_str(node.target) in OP_TO_KERNEL
-        kind = "accelerator" if is_supported else "fallback"
+        kind = "accelerator" if is_supported else "unsupported"
         if current_kind is None:
             current_kind = kind
         if kind != current_kind:
@@ -69,7 +59,7 @@ def partition_graph(gm: GraphModule):
 
 
 def compile_graph(gm: GraphModule):
-    """Lower an FX graph into a linear program with fallback tags."""
+    """Lower an FX graph into a linear program with support tags."""
     program = []
     for node in gm.graph.nodes:
         if node.op == "placeholder":
@@ -139,11 +129,11 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
                 fn_args = [_decode_arg(a, env) for a in instr["args"]]
                 fn_kwargs = {k: _decode_arg(v, env) for k, v in instr["kwargs"].items()}
 
-                if instr["supported"]:
-                    result = c_abi.call_kernel(instr["kernel"], *fn_args, **fn_kwargs)
-                else:
-                    print(f"  [FALLBACK] {instr['target']}")
-                    result = _resolve_target(instr["target"])(*fn_args, **fn_kwargs)
+                if not instr["supported"]:
+                    raise NotImplementedError(
+                        f"Unsupported op '{instr['target']}' in accelerator-only mode"
+                    )
+                result = c_abi.call_kernel(instr["kernel"], *fn_args, **fn_kwargs)
 
                 env[instr["name"]] = result
             elif instr["op"] == "output":

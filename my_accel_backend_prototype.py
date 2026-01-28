@@ -34,16 +34,6 @@ def _target_to_str(target):
     return str(target)
 
 
-def _resolve_target(target_str):
-    parts = target_str.split(".")
-    if len(parts) != 3:
-        raise ValueError(f"Unsupported target string '{target_str}'")
-    namespace, op_name, overload = parts
-    ns = getattr(torch.ops, namespace)
-    op = getattr(ns, op_name)
-    return getattr(op, overload)
-
-
 def _encode_arg(arg):
     if hasattr(arg, "name"):
         return ("node", arg.name)
@@ -105,7 +95,7 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
         if node.op == "call_function":
             target_str = _target_to_str(node.target)
             ops_found.append(target_str)
-            supported = "✓ SUPPORTED" if target_str in OP_REGISTRY else "✗ NOT SUPPORTED (will fallback)"
+            supported = "✓ SUPPORTED" if target_str in OP_REGISTRY else "✗ NOT SUPPORTED"
             print(f"  Found op: {target_str} - {supported}")
 
     print(f"\nTotal ops: {len(ops_found)}")
@@ -129,11 +119,11 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
                 fn_args = [_decode_arg(a, env) for a in instr["args"]]
                 fn_kwargs = {k: _decode_arg(v, env) for k, v in instr["kwargs"].items()}
 
-                if instr["supported"]:
-                    result = OP_REGISTRY[instr["target"]](*fn_args, **fn_kwargs)
-                else:
-                    print(f"  [FALLBACK] {instr['target']}")
-                    result = _resolve_target(instr["target"])(*fn_args, **fn_kwargs)
+                if not instr["supported"]:
+                    raise NotImplementedError(
+                        f"Unsupported op '{instr['target']}' in accelerator-only mode"
+                    )
+                result = OP_REGISTRY[instr["target"]](*fn_args, **fn_kwargs)
 
                 env[instr["name"]] = result
             elif instr["op"] == "output":

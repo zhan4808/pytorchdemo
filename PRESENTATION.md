@@ -3,8 +3,8 @@
 ## Executive Summary
 
 We should build the Atalla PyTorch infrastructure around **`torch.export` and an
-ExecuTorch‑style delegate** that emits a **static blob** loaded into simulated
-DRAM, then executed by the runtime through a C‑ABI kernel library. This avoids
+ExecuTorch‑style delegate** that emits a **static C executable** (DRAM image)
+executed by the runtime through a C‑ABI kernel library. This avoids
 JIT/firmware complexity while matching how hardware and compiler teams want to
 reason about fixed programs and memory layouts. In parallel, a minimal
 **PrivateUse1** backend should be used for kernel bring‑up and allocator
@@ -19,18 +19,17 @@ validation, without blocking the main pipeline.
   simulated CPU to orchestrate runtime JIT execution. This adds major complexity
   and breaks clean benchmarking.
 - **Implication**: we need **static graph capture** and **fixed executables**
-  loaded into simulated DRAM.
+  loaded into simulated DRAM, with no eager fallback.
 
 ## Proposed Architecture (Atalla‑Optimized)
 
 1. **Graph capture**: `torch.export.export` produces an FX `GraphModule` with
    ATen ops (e.g., `aten.matmul.default`).
-2. **Partitioning**: split supported vs fallback ops. Supported subgraphs are
-   delegated; fallback executes on CPU.
+2. **Coverage check**: verify all ops are supported on Atalla (no CPU fallback).
 3. **Lowering**: map ATen ops to Atalla kernel stubs (op registry).
 4. **Compilation**: lower to a linear program IR or Atalla‑specific IR.
-5. **Serialization**: emit a versioned blob, placed into simulated DRAM.
-6. **Runtime**: read blob, launch Atalla kernels through the C‑ABI boundary.
+5. **Emission**: emit a versioned C executable/DRAM image.
+6. **Runtime**: load the executable, launch Atalla kernels through the C‑ABI boundary.
 7. **Simulator/RTL hooks**: runtime dispatches to simulator when enabled.
 
 This mirrors hardware expectations: a **static program** in memory, deterministic
@@ -40,7 +39,6 @@ execution, and explicit control over data movement and layouts.
 
 - **Static program**: aligns with simulated DRAM + fixed executables.
 - **Cleaner debugging**: FX graph is inspectable and deterministic.
-- **CPU fallback**: partial coverage works early with minimal ops.
 - **Separation of concerns**: compiler handles blob; runtime executes blob.
 - **Matches existing projects**: ExecuTorch delegates are explicitly designed
   for ahead‑of‑time compilation and embedded deployment.
@@ -163,7 +161,7 @@ firmware.” It keeps kernels small and lets system policy evolve independently.
 ## Phased Plan
 
 **Phase 1 (now)**
-- Kernel stubs + blob format + runtime loop + CPU fallback.
+- Kernel stubs + blob format + runtime loop.
 - Minimal operator set, correctness first.
 
 **Phase 2**
@@ -177,7 +175,7 @@ firmware.” It keeps kernels small and lets system policy evolve independently.
 - **Systolic arrays** benefit from static scheduling and explicit layouts.
 - **Compiler‑friendly**: clear interface for kernel teams and compiler teams.
 - **Simulation‑friendly**: deterministic blobs and DRAM placement.
-- **Scalable**: incremental operator coverage with fallback.
+- **Scalable**: incremental operator coverage without fallback.
 
 ## Ask for Alignment
 
