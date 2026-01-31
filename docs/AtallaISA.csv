@@ -1,0 +1,232 @@
+Column 1,opcode[6:0],operation,Type,Pseudocode,Column 1,comments,Signed-off by
+add.s,0000001,Add,R,rd = rs1 + rs2,1,,Sooraj Chetput
+sub.s,0000010,Sub,R,rd = rs1 - rs2,2,,Sooraj Chetput
+mul.s,0000011,Multiply,R,rd = rs1 * rs2,3,,Sooraj Chetput
+div.s,0000100,Divide,R,rd = rs1 / rs2,4,,Sooraj Chetput
+mod.s,0000101,Modular,R,rd = rs1 % rs2,5,,Sooraj Chetput
+or.s,0000110,Or,R,rd = rs1 | rs2,6,,Sooraj Chetput
+and.s,0000111,And,R,rd = rs1 & rs2,7,,Sooraj Chetput
+xor.s,0001000,Xor,R,rd = rs1 ^ rs2,8,,Sooraj Chetput
+sll.s,0001001,Shift left logical,R,rd = rs1 << rs2,9,,Sooraj Chetput
+srl.s,0001010,Shift Right Logical,R,rd = rs1 >> rs2,10,,Sooraj Chetput
+sra.s,0001011,Shift Right Arith,R,rd = rs1 >> rs2,11,,Sooraj Chetput
+slt.s,0001100,Set Less Than,R,rd = rs1 < rs2,12,,Sooraj Chetput
+sltu.s,0001101,Set Less Than (U),R,rd = u(rs1) < u(rs2),13,,Sooraj Chetput
+add.bf,0001110,Add BF16,R,rd = rs1 + rs2,14,,Rishikesh Bathina
+sub.bf,0001111,Sub BF16,R,rd = rs1 - rs2,15,,Rishikesh Bathina
+mul.bf,0010000,Multiply BF16,R,rd = rs1 * rs2,16,,Rishikesh Bathina
+div.bf,0010001,Divide BF16,R,rd = rs1 / rs2,17,,Rishikesh Bathina
+slt.bf,0010010,Set Less Than BF16,R,rd = rs1 < rs2,18,,Rishikesh Bathina
+sltu.bf,0010011,Set Less Than (U) BF16,R,rd = u(rs1) < u(rs2),19,,Rishikesh Bathina
+stbf.s,0010100,Converts Scalar to BF16,R,rd = BF16(rs1),20,,Rishikesh Bathina
+bfts.s,0010101,Converts BF16 to Scalar,R,rd = INT(rs1),21,,Rishikesh Bathina
+addi.s,0010110,Add,I,rd = rs1 + imm,22,,Sooraj Chetput
+subi.s,0010111,Sub,I,rd = rs1 - imm,23,,Sooraj Chetput
+muli.s,0011000,Multiply,I,rd = rs1 * imm,24,,Sooraj Chetput
+divi.s,0011001,Divide,I,rd = rs1 / imm,25,,Sooraj Chetput
+modi.s,0011010,Modular,I,rd = rs1 % imm,26,,Sooraj Chetput
+ori.s,0011011,Or,I,rd = rs1 | imm,27,,Sooraj Chetput
+andi.s,0011100,And,I,rd = rs1 & imm,28,,Sooraj Chetput
+xori.s,0011101,Xor,I,rd = rs1 ^ imm,29,,Sooraj Chetput
+slli.s,0011110,Shift left logical,I,rd = rs1 << (imm & 0x1F),30,,Sooraj Chetput
+srli.s,0011111,Shift Right Logical,I,rd = rs1 >> (imm & 0x1F),31,,Sooraj Chetput
+srai.s,0100000,Shift Right Arith,I,rd = rs1 >> (imm & 0x1F),32,,Sooraj Chetput
+slti.s,0100001,Set Less Than,I,rd = rs1 < imm,33,,Sooraj Chetput
+sltui.s,0100010,Set Less Than (U),I,rd = u(rs1) < u(imm),34,,Sooraj Chetput
+beq.s,0100011,Branch Equal,BR,rs1 = rs1 + incr7; if (rs1 == rs2) PC = PC + imm,35,,Sooraj Chetput
+bne.s,0100100,Branch Not Equal,BR,rs1 = rs1 + incr7; if (rs1 != rs2) PC = PC + imm,36,,Sooraj Chetput
+blt.s,0100101,Branch Less Than,BR,rs1 = rs1 + incr7; if (rs1 < rs2) PC = PC + imm,37,,Sooraj Chetput
+bge.s,0100110,Branch Greater Than or Equal,BR,rs1 = rs1 + incr7; if (rs1 >= rs2) PC = PC + imm,38,,Sooraj Chetput
+bgt.s,0100111,Branch Greater Than ,BR,rs1 = rs1 + incr7; if (rs1 > rs2) PC = PC + imm,39,,Sooraj Chetput
+ble.s,0101000,Branch Less Than or Equal,BR,rs1 = rs1 + incr7; if (rs1 <= rs2) PC = PC + imm,40,,Sooraj Chetput
+lw.s,0101001,load word,M,rd = MEM[rs1 + sign(imm[11:0])],41,,Sooraj Chetput
+sw.s,0101010,store word,M,MEM[rs1 + sign(imm[11:0])] = rd,42,,Sooraj Chetput
+jal,0101011,jump and link,MI,rd = PC+4; PC += imm,43,,Sooraj Chetput
+jalr,0101100,jump and link register,I,rd = PC+4; PC = rs1 + imm,44,,Sooraj Chetput
+li.s,0101101,load immediate,MI,rd[24:0] = imm[24:0],45,Pseudo instructions,Sooraj Chetput
+lui.s,0101110,load upper immediate,MI,rd[31:25] =imm[6:0],46,,Sooraj Chetput
+nop.s,0101111,no operation,S,Do nothing,47,,Sooraj Chetput
+halt.s,0110000,halt program,S,stop increment PC,48,,Sooraj Chetput
+barrier.s,0110001,force all prior packets to complete,S,,49,,Sooraj Chetput
+add.vv,0110010,element-wise add,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vd[i] = vs1[i] + vs2[i]; 
+PC = PC + 4",50,,Sooraj Chetput
+sub.vv,0110011,element-wise sub,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vd[i] = vs1[i] - vs2[i]; 
+PC = PC + 4",51,,Sooraj Chetput
+mul.vv,0110100,element-wise multiply,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vd[i] = vs1[i] * vs2[i]; 
+PC = PC + 4",52,,Sooraj Chetput
+div.vv,0110101,element-wise divide,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vd[i] = vs1[i] / vs2[i]; 
+PC = PC + 4",53,,Sooraj Chetput
+and.vv,0110110,element-wise -- bitwise and,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vd[i] = vs1[i] & vs2[i]; 
+PC = PC + 4",54,,Sooraj Chetput
+or.vv,0110111,element-wise -- bitwise or,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vd[i] = vs1[i] | vs2[i]; 
+PC = PC + 4",55,,Sooraj Chetput
+xor.vv,0111000,element-wise -- bitwise xor,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vd[i] = vs1[i] ^ vs2[i]; 
+PC = PC + 4",56,,Sooraj Chetput
+gemm.vv,0111001,send input and psum to sys array,VV,"vd = vs1 * weights + vs2;
+PC = PC + 4",57,,Sooraj Chetput
+mgt.vv,0111010,mask greater than,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] > vs2[i]; 
+PC = PC + 4",58,,Sooraj Chetput
+mlt.vv,0111011,mask less than ,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] < vs2[i]; 
+PC = PC + 4",59,,Sooraj Chetput
+meq.vv,0111100,mask equals to ,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] == vs2[i]; 
+PC = PC + 4",60,,Sooraj Chetput
+mneq.vv,0111101,mask not equals to,VV,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] != vs2[i]; 
+PC = PC + 4",61,,Sooraj Chetput
+addi.vi,0111110,element-wise add immediate,VI,"for (i=0; i<VL; i++)
+if (mask[i]) 
+     vd[i] = vs1[i] + imm; 
+PC = PC + 4",62,,"Vedant, Sooraj"
+subi.vi,0111111,element-wise subtract immediate,VI,"for (i=0; i<VL; i++) 
+if (mask[i]) 
+    vd[i] = vs1[i] - imm;
+PC = PC + 4",63,,"Vedant, Sooraj"
+muli.vi,1000000,element-wise multiply immediate,VI,"for (i=0; i<VL; i++)
+if (mask[i]) 
+    vd[i] = vs1[i] * imm; 
+PC = PC + 4",64,,"Vedant, Sooraj"
+divi.vi,1000001,element-wise divide immediate,VI,"for (i=0; i<VL; i++) 
+if (mask[i]) 
+   vd[i] = vs1[i] / imm; 
+PC = PC + 4",65,,"Vedant, Sooraj"
+expi.vi,1000010,element-wise exponentiation,VI,"for (i=0; i<VL; i++)
+if (mask[i])
+vd[i] = exp(vs1[i]);
+PC = PC + 4",66,,Fan Jing Hoon
+sqrti.vi,1000011,element-wise square root,VI,"for (i=0; i<VL; i++) 
+    if (mask[i]) 
+        vd[i] = sqrt(vs1[i]); 
+PC = PC + 4",67,,"Walter, Jacob"
+not.vi,1000100,element-wise bitwise not,VI,"for (i=0; i<VL; i++) 
+    if (mask[i]) 
+        vd[i] = ~(vs1[i]); 
+PC = PC + 4",68,,"Vedant, Sooraj"
+shift.vi,1000101,vector lane shift imm left or right,VI,"imm_shift = imm5; 
+dir = imm8[23]; // bit 0 of imm8 (0 = left, 1 = right)
+
+if (dir == 0)
+    // Left shift
+    for (i = 0; i < VL - imm_shift; i++)
+        vd[i + imm_shift] = vs1[i];
+else 
+    // Right shift
+    for (i = imm_shift; i < VL; i++)
+        vd[i - imm_shift] = vs1[i];
+
+PC = PC + 4;",69,,"Saandiya, Jing"
+lw.vi,1000110,load weight to sys array imm,VI,"weights = vs1;
+PC = PC + 4;",70,,"Saandiya, Jing"
+rsum.vi,1000111,vector reduction sum,VI,"for (i = 0; i < VL; i++)
+    if (imm[6])
+        vd[i] = SUM(vs)
+    else if (imm[5])
+        if (i == imm[0:4])
+            vd[i] = SUM(vs)
+        else
+            vd[i] = 0
+    else
+        if (i == imm[0:4])
+            vd[i] = SUM(vs)
+        else
+            vd[i] = vs[i]
+PC = PC + 4",71,,"Walter, Jacob"
+rmin.vi,1001000,vector reduction min,VI,"for (i = 0; i < VL; i++)
+    if (imm[6])
+        vd[i] = MIN(vs)
+    else if (imm[5])
+        if (i == imm[0:4])
+            vd[i] = MIN(vs)
+        else
+            vd[i] = 0
+    else
+        if (i == imm[0:4])
+            vd[i] = MIN(vs)
+        else
+            vd[i] = vs[i]
+PC = PC + 4",72,,"Walter, Jacob"
+rmax.vi,1001001,vector reduction max,VI,"for (i = 0; i < VL; i++)
+    if (imm[6])
+        vd[i] = MAX(vs)
+    else if (imm[5])
+        if (i == imm[0:4])
+            vd[i] = MAX(vs)
+        else
+            vd[i] = 0
+    else
+        if (i == imm[0:4])
+            vd[i] = MAX(vs)
+        else
+            vd[i] = vs[i]
+PC = PC + 4",73,,"Walter, Jacob"
+shift.vs,0111000,vector lane shift scalar reg left or right,VS,"dir_bit = rs1[28];         // Bit[28] selects direction: 0=RIGHT, 1=LEFT
+shift_amt = rs1[27:23];   // Bits[27:23] give shift amt (0–31)
+
+if (dir_bit == 1) 
+    // LEFT shift
+    for (i = 0; i < VL - shift_amt; i++)
+        vd[i + shift_amt] = vs1[i];
+else 
+    // RIGHT shift
+    for (i = shift_amt; i < VL; i++)
+        vd[i - shift_amt] = vs1[i];
+
+PC = PC + 4;",74,,"Fan Jing Hoon, Saandiya"
+mv.mts,1001011,Moves a mask to the scalar reg file,MTS,rd = vms,75,,Fan Jing Hoon
+mv.stm,1001100,moves a scalar to the mask reg file,STM,vmd= rs1,76,,Fan Jing Hoon
+vreg.ld ,1001101,Vector Load,VM,"for (i=0; i<VL; i++)
+     vd1[i] = SCPAD[(rs1 ,numtilerow,numtilecol,roworcolid,row/column,datatype), i];
+PC = PC + 4",77,,"Sooraj, Vedant"
+vreg.st ,1001110,Vector Store,VM,"for (i=0; i<VL; i++)
+     SCPAD[(rs1, numtilerow,numtilecol,roworcolid,row/column,datatype), i] = vd1[i], 
+PC = PC + 4",78,,"Sooraj, Vedant"
+vmov.vi,1001111,Move Vector Element Immediate,VI,rd = vs1[imm]; PC = PC + 4,79,,Joseph Ghanem
+add.vs,1010000,Add Scalar,VS,"for (i=0; i<VL; i++)
+     if (mask[i])
+     vd[i] = vs1[i] + rs1;
+PC = PC + 4",80,"rs1 is fp16/bf16 in scalar reg. INT32->FP/BF16 conversion is done in scalar core, guaranteed by compiler",Fan Jing Hoon
+sub.vs,1010001,Sub Scalar,VS,for (i=0; i<VL; i++) if (mask[i]) vd[i] = vs1[i] - rs1; PC = PC + 4,81,see above,Fan Jing Hoon
+mul.vs,1010010,Mult Scalar,VS,for (i=0; i<VL; i++) if (mask[i]) vd[i] = vs1[i] * rs1; PC = PC + 4,82,see above,Fan Jing Hoon
+div.vs,1010011,Divide Scalar,VS,for (i=0; i<VL; i++) if (mask[i]) vd[i] = vs1[i] / rs1; PC = PC + 4,83,see above,Fan Jing Hoon
+mgt.vs,1010100,Mask Greater Than Scalar,VS,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] > rs1; 
+PC = PC + 4",84,,Joseph Ghanem
+mlt.vs,1010101,Mask Less Than Scalar,VS,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] < rs1; 
+PC = PC + 4",85,,Joseph Ghanem
+meq.vs,1010110,Mask Equals Scalar,VS,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] == rs1; 
+PC = PC + 4",86,,Joseph Ghanem
+mneq.vs,1010111,Mask Not Equals Scalar,VS,"for (i=0; i<VL; i++)                            
+      if (mask[i]) 
+           vmd[i] = vs1[i] != rs1; 
+PC = PC + 4",87,,Joseph Ghanem
+scpad.ld,1011000,Scratchpad Load ,SDMA,"for (i = 0; i < NR; i++) 
+    for (j = 0; j < NC; j++) 
+        SCPAD[(scpad_ptr* i) + j] = GMEM[swizzle((gmem_ptr* i) + )] ",88,,Akshath Raghav R
+scpad.st,1011001,Scratchpad Store,SDMA,"for (i = 0; i < NR; i++) 
+    for (j = 0; j < NC; j++) 
+        GMEM[(gmem_ptr* i) + j] = SCPAD[swizzle((scpad_ptr * i) + )] ",89,,Akshath Raghav R

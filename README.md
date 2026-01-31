@@ -14,6 +14,8 @@ python export_basics.py
 python explore_fx_graph.py
 python my_accel_backend_prototype.py
 python backend_pipeline_demo.py
+python model_coverage.py
+python spec_check.py
 ```
 ## Diagram
 
@@ -35,6 +37,7 @@ Notes:
 - `my_accel_backend_prototype.py` routes ops through `kernel_lib.py` (Python
   placeholder kernels).
 - `backend_pipeline_demo.py` adds partitioning + serialization + C-ABI boundary.
+- Partitioning is informational; unsupported ops are compile-time errors.
 - `torch.export` is used to capture graphs for the demo backend pipeline.
  - Exported graphs use ATen ops like `aten.relu.default`, which is what the
    registry maps against.
@@ -73,3 +76,8 @@ Notes:
 - Add memory planning + shape specialization; implement binary format/versioning for blobs.
 - Add simulator/RTL execution hooks in the runtime.
  - Emit a final C executable (no eager execution or CPU fallback).
+
+## Interface docs
+- `docs/AtallaSpec.md`: central Phase‑1 spec (ABI, ISA, blob, opsets).
+- `meeting_notes_2026-01-29.md`: hardware notes from 2026-01-29.
+- ISA references: `AtallaISA.csv`, `ISA Atalla Bit-Spec.csv`.

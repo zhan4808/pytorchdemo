@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+doc.md
+explain.md
+meeting_notes_2026-01-29.md
+compilerreport.md

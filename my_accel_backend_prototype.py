@@ -22,11 +22,35 @@ def my_accel_softmax(x, dim):
     return kernels.softmax(x, dim=dim)
 
 
+def my_accel_add(a, b):
+    print(f"  [MY_ACCEL] add called: {a.shape} + {b.shape}")
+    return kernels.add(a, b)
+
+
+def my_accel_sub(a, b):
+    print(f"  [MY_ACCEL] sub called: {a.shape} - {b.shape}")
+    return kernels.sub(a, b)
+
+
+def my_accel_mul(a, b):
+    print(f"  [MY_ACCEL] mul called: {a.shape} * {b.shape}")
+    return kernels.mul(a, b)
+
+
+def my_accel_transpose(x, dim0, dim1):
+    print(f"  [MY_ACCEL] transpose called: {x.shape}, dim0={dim0}, dim1={dim1}")
+    return kernels.transpose(x, dim0=dim0, dim1=dim1)
+
+
 OP_REGISTRY = {
     "aten.matmul.default": my_accel_matmul,
     "aten.relu.default": my_accel_relu,
     "aten.softmax.int": my_accel_softmax,
     "aten.softmax.default": my_accel_softmax,
+    "aten.add.Tensor": my_accel_add,
+    "aten.sub.Tensor": my_accel_sub,
+    "aten.mul.Tensor": my_accel_mul,
+    "aten.transpose.int": my_accel_transpose,
 }
 
 
@@ -100,6 +124,12 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
 
     print(f"\nTotal ops: {len(ops_found)}")
     print(f"Supported: {sum(1 for op in ops_found if op in OP_REGISTRY)}")
+    unsupported = sorted({op for op in ops_found if op not in OP_REGISTRY})
+    if unsupported:
+        raise NotImplementedError(
+            "Unsupported ops in accelerator-only mode: "
+            + ", ".join(unsupported)
+        )
 
     program = compile_graph(gm)
     call_function_count = sum(1 for instr in program if instr["op"] == "call_function")

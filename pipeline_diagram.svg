@@ -21,20 +21,20 @@
   <text class="text" x="245" y="85">FX Graph</text>
 
   <rect class="box" x="400" y="40" width="160" height="60" rx="6"/>
-  <text class="text" x="430" y="65">Partition</text>
-  <text class="small" x="410" y="85">supported vs unsupported</text>
+  <text class="text" x="425" y="65">Validate Ops</text>
+  <text class="small" x="418" y="85">no fallback</text>
 
   <rect class="box" x="590" y="40" width="170" height="60" rx="6"/>
   <text class="text" x="615" y="65">Lower + Compile</text>
   <text class="small" x="635" y="85">Program IR</text>
 
   <rect class="box" x="790" y="40" width="130" height="60" rx="6"/>
-  <text class="text" x="805" y="65">Emit C</text>
-  <text class="small" x="805" y="85">Executable</text>
+  <text class="text" x="802" y="65">Emit Blob</text>
+  <text class="small" x="802" y="85">C Exec</text>
 
   <rect class="box" x="950" y="40" width="150" height="60" rx="6"/>
   <text class="text" x="985" y="65">Runtime</text>
-  <text class="small" x="965" y="85">C-ABI Kernels</text>
+  <text class="small" x="965" y="85">C-ABI + alloc</text>
 
   <line class="arrow" x1="180" y1="70" x2="210" y2="70"/>
   <line class="arrow" x1="370" y1="70" x2="400" y2="70"/>

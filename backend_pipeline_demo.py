@@ -13,6 +13,10 @@ OP_TO_KERNEL = {
     "aten.relu.default": "relu",
     "aten.softmax.int": "softmax",
     "aten.softmax.default": "softmax",
+    "aten.add.Tensor": "add",
+    "aten.sub.Tensor": "sub",
+    "aten.mul.Tensor": "mul",
+    "aten.transpose.int": "transpose",
 }
 
 
@@ -88,6 +92,20 @@ def compile_graph(gm: GraphModule):
     return program
 
 
+def _validate_program(program):
+    unsupported = [
+        instr["target"]
+        for instr in program
+        if instr["op"] == "call_function" and not instr["supported"]
+    ]
+    if unsupported:
+        unique = sorted(set(unsupported))
+        raise NotImplementedError(
+            "Unsupported ops in accelerator-only mode: "
+            + ", ".join(unique)
+        )
+
+
 def serialize_program(program):
     """Serialize a program to bytes (mock compiler artifact)."""
     return json.dumps(program, default=str).encode("utf-8")
@@ -109,6 +127,7 @@ def my_accel_backend(gm: GraphModule, example_inputs: List[torch.Tensor]):
         print(f"  Segment {idx}: {seg['kind']} ({len(seg['nodes'])} ops)")
 
     program = compile_graph(gm)
+    _validate_program(program)
     print(f"Compiled program length: {len(program)}")
 
     blob = serialize_program(program)

@@ -18,3 +18,23 @@ def softmax(x: torch.Tensor, dim: int = -1) -> torch.Tensor:
     exp = torch.exp(x - x_max)
     denom = exp.sum(dim=dim, keepdim=True)
     return exp / denom
+
+
+def add(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    """Elementwise add stub."""
+    return a + b
+
+
+def sub(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    """Elementwise sub stub."""
+    return a - b
+
+
+def mul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    """Elementwise mul stub."""
+    return a * b
+
+
+def transpose(x: torch.Tensor, dim0: int, dim1: int) -> torch.Tensor:
+    """Transpose stub using PyTorch transpose."""
+    return x.transpose(dim0, dim1)
